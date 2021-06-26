@@ -1,4 +1,4 @@
-module github.com/go-eden/routine
+module github.com/haima/routine
 
 go 1.16
 
