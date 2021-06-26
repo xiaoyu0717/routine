@@ -61,6 +61,10 @@ func NewLocalStorage() LocalStorage {
 	return t
 }
 
+func GetLocalStorage() LocalStorage {
+	return new(storage)
+}
+
 // Goid return the current goroutine's unique id.
 // It will try get gid by native cgo/asm for better performance,
 // and could parse gid from stack for failover supporting.

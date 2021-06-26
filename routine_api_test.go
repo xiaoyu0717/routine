@@ -25,10 +25,10 @@ func TestAllGoid(t *testing.T) {
 
 func TestGoStorage(t *testing.T) {
 	var variable = "hello world"
-	stg := NewLocalStorage()
+	stg := GetLocalStorage()
 	stg.Set(variable, variable)
 	Go(func() {
-		v := stg.Get(variable)
+		v := GetLocalStorage().Get(variable)
 		assert.True(t, v != nil && v.(string) == variable)
 	})
 	time.Sleep(time.Millisecond)
