@@ -67,31 +67,29 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-eden/routine"
+	"github.com/haima/routine"
 	"time"
 )
 
-var nameVar = routine.NewLocalStorage()
-
 func main() {
-	nameVar.Set("hello world")
-	fmt.Println("name: ", nameVar.Get())
+	routine.GetLocalStorage().Set("key","hello world")
+	fmt.Println("name: ", routine.GetLocalStorage().Get("key"))
 
-	// 其他协程不能读取前面Set的"hello world"
+	// other goroutine cannot read it
 	go func() {
-		fmt.Println("name1: ", nameVar.Get())
+		fmt.Println("name1: ", routine.GetLocalStorage().Get("key"))
 	}()
 
-	// 但是可以通过Go函数启动新协程，并将当前main协程的全部协程上下文变量赋值过去
+	// but, the new goroutine could inherit/copy all local data from the current goroutine like this:
 	routine.Go(func() {
-		fmt.Println("name2: ", nameVar.Get())
+		fmt.Println("name2: ", routine.GetLocalStorage().Get("key"))
 	})
 
-	// 或者，你也可以手动copy当前协程上下文至新协程，Go()函数的内部实现也是如此
+	// or, you could copy all local data manually
 	ic := routine.BackupContext()
 	go func() {
 		routine.InheritContext(ic)
-		fmt.Println("name3: ", nameVar.Get())
+		fmt.Println("name3: ", routine.GetLocalStorage().Get("key"))
 	}()
 
 	time.Sleep(time.Second)
