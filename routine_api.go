@@ -6,13 +6,13 @@ import "fmt"
 type LocalStorage interface {
 
 	// Get returns the value in the current goroutine's local storage, if it was set before.
-	Get() (value interface{})
+	Get(key string) (value interface{})
 
 	// Set copy the value into the current goroutine's local storage, and return the old value.
-	Set(value interface{}) (oldValue interface{})
+	Set(key string, value interface{}) (oldValue interface{})
 
 	// Del delete the value from the current goroutine's local storage, and return it.
-	Del() (oldValue interface{})
+	Del(key string) (oldValue interface{})
 
 	// Clear delete values from all goroutine's local storages.
 	Clear()
@@ -21,7 +21,7 @@ type LocalStorage interface {
 // ImmutableContext represents all local storages of one goroutine.
 type ImmutableContext struct {
 	gid    int64
-	values map[uintptr]interface{}
+	values map[string]interface{}
 }
 
 // Go start an new goroutine, and copy all local storages from current goroutine.
@@ -36,7 +36,7 @@ func Go(f func()) {
 // BackupContext copy all local storages into an ImmutableContext instance.
 func BackupContext() *ImmutableContext {
 	s := loadCurrentStore()
-	data := make(map[uintptr]interface{}, len(s.values))
+	data := make(map[string]interface{}, len(s.values))
 	for k, v := range s.values {
 		data[k] = v
 	}
