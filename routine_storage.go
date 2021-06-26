@@ -4,7 +4,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"unsafe"
 )
 
 var (
@@ -27,23 +26,23 @@ func gcRunning() bool {
 type store struct {
 	gid    int64
 	count  uint32
-	values map[uintptr]interface{}
+	values map[string]interface{}
 }
 
 type storage struct {
 }
 
-func (t *storage) Get() (v interface{}) {
+func (t *storage) Get(key string) (v interface{}) {
 	s := loadCurrentStore()
-	id := uintptr(unsafe.Pointer(t))
-	return s.values[id]
+	//id := uintptr(unsafe.Pointer(t))
+	return s.values[key]
 }
 
-func (t *storage) Set(v interface{}) (oldValue interface{}) {
+func (t *storage) Set(key string, v interface{}) (oldValue interface{}) {
 	s := loadCurrentStore()
-	id := uintptr(unsafe.Pointer(t))
-	oldValue = s.values[id]
-	s.values[id] = v
+	//id := uintptr(unsafe.Pointer(t))
+	oldValue = s.values[key]
+	s.values[key] = v
 	atomic.StoreUint32(&s.count, uint32(len(s.values)))
 
 	// try restart gc timer if Set for the first time
@@ -57,18 +56,18 @@ func (t *storage) Set(v interface{}) (oldValue interface{}) {
 	return
 }
 
-func (t *storage) Del() (v interface{}) {
+func (t *storage) Del(key string) (v interface{}) {
 	s := loadCurrentStore()
-	id := uintptr(unsafe.Pointer(t))
-	v = s.values[id]
-	delete(s.values, id)
+	//id := uintptr(unsafe.Pointer(t))
+	v = s.values[key]
+	delete(s.values, key)
 	atomic.StoreUint32(&s.count, uint32(len(s.values)))
 	return
 }
 
 func (t *storage) Clear() {
 	s := loadCurrentStore()
-	s.values = map[uintptr]interface{}{}
+	s.values = map[string]interface{}{}
 	atomic.StoreUint32(&s.count, 0)
 }
 
@@ -82,7 +81,7 @@ func loadCurrentStore() (s *store) {
 		if s = oldStoreMap[gid]; s == nil {
 			s = &store{
 				gid:    gid,
-				values: map[uintptr]interface{}{},
+				values: map[string]interface{}{},
 			}
 			newStoreMap := make(map[int64]*store, len(oldStoreMap)+1)
 			for k, v := range oldStoreMap {

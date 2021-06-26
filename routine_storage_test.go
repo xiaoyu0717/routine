@@ -1,8 +1,10 @@
 package routine
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -14,26 +16,27 @@ func init() {
 
 func TestStorage(t *testing.T) {
 	var s storage
+	key := "k1"
 
 	for i := 0; i < 100; i++ {
 		src := "hello"
-		s.Set(src)
-		p := s.Get()
+		s.Set(key, src)
+		p := s.Get(key)
 		assert.True(t, p.(string) == src)
 	}
 
 	for i := 0; i < 1000; i++ {
 		num := rand.Int()
-		s.Set(num)
-		num2 := s.Get()
+		s.Set(strconv.Itoa(num), num)
+		num2 := s.Get(strconv.Itoa(num))
 		assert.True(t, num2.(int) == num)
 	}
 
-	v := s.Del()
+	v := s.Del(key)
 	assert.True(t, v != nil)
 
 	s.Clear()
-	v = s.Get()
+	v = s.Get(key)
 	assert.True(t, v == nil)
 }
 
@@ -48,9 +51,10 @@ func TestStorageConcurrency(t *testing.T) {
 	for i := 0; i < concurrency; i++ {
 		go func() {
 			v := rand.Uint64()
+			k := fmt.Sprint()
 			for i := 0; i < loopTimes; i++ {
-				s.Set(v)
-				tmp := s.Get()
+				s.Set(k, v)
+				tmp := s.Get(k)
 				assert.True(t, tmp.(uint64) == v)
 			}
 			waiter.Done()
@@ -66,11 +70,11 @@ func TestStorageGC(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		for i := 0; i < 1000; i++ {
 			go func() {
-				s1.Set("hello world")
-				s2.Set(true)
-				s3.Set(&s3)
-				s4.Set(rand.Int())
-				s5.Set(time.Now())
+				s1.Set("s1", "hello world")
+				s2.Set("s2", true)
+				s3.Set("s3", &s3)
+				s4.Set("s4", rand.Int())
+				s5.Set("s5", time.Now())
 			}()
 		}
 		assert.True(t, gcRunning(), "#%v, timer not running?", i)
@@ -92,8 +96,8 @@ func BenchmarkStorage(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = s.Get()
-		s.Set(variable)
-		s.Del()
+		_ = s.Get(variable)
+		s.Set(variable, variable)
+		s.Del(variable)
 	}
 }
